@@ -1,156 +1,388 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Shipping Slip Generator</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    h2 {
-      text-align: center;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .upload-section {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .slip {
-      width: 48%;
-      display: inline-block;
-      margin: 1%;
-      padding: 10px;
-      box-sizing: border-box;
-      height: 148mm;
-      width: 105mm;
-      border: 1px dashed #ccc;
-      background: white;
-      position: relative;
-    }
-    .slip img {
-      max-width: 100%;
-      max-height: 60px;
-      margin-bottom: 10px;
-    }
-    .slip h4 {
-      margin: 5px 0;
-    }
-    #previewCanvas {
-      display: none;
-      max-width: 100%;
-      margin-top: 10px;
-    }
-    .print-btn {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      background-color: #222;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      border-radius: 6px;
-    }
-    #cropper-container {
-      display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Slip Generator - Zardoz By Anas Traders</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            line-height: 1.4;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .upload-button {
+            flex: 1;
+            height: 44px;
+            padding: 8px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .camera-button {
+            background: #2196F3;
+        }
+
+        .camera-button:hover {
+            background: #1976D2;
+        }
+
+        .gallery-button {
+            background: #4CAF50;
+        }
+
+        .gallery-button:hover {
+            background: #45a049;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        #generateButton {
+            width: 100%;
+            padding: 12px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        #generateButton:hover {
+            background: #f4511e;
+        }
+
+        #generateButton:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .upload-status {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            color: #2e7d32;
+        }
+
+        .upload-status i {
+            font-size: 20px;
+        }
+
+        .cropper-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        #cropperImage {
+            max-width: 100%;
+            max-height: 80vh;
+        }
+
+        .cropper-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .cropper-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .confirm-crop {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .cancel-crop {
+            background: #f44336;
+            color: white;
+        }
+
+        @media print {
+            .container {
+                display: none;
+            }
+
+            .shipping-slip {
+                display: block !important;
+                width: 100%;
+                height: 148mm;
+                page-break-after: always;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .upload-button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Zardoz Shipping Slip Generator</h2>
-    <div class="upload-section">
-      <input type="file" accept="image/*" onchange="handleFile(event)">
-      <canvas id="previewCanvas"></canvas>
-      <br>
-      <button onclick="printSlips()" class="print-btn">Print Slips</button>
-    </div>
-    <div id="slipsContainer">
-      <div class="slip" id="slip1">
-        <img id="slipImage1" src="">
-        <h4>Zardoz By Anas Traders</h4>
-        <p>Chandni Chowk, Delhi</p>
-      </div>
-      <div class="slip" id="slip2">
-        <img id="slipImage2" src="">
-        <h4>Zardoz By Anas Traders</h4>
-        <p>Chandni Chowk, Delhi</p>
-      </div>
-    </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
-  <script>
-    let cropper;
-    function handleFile(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    <div class="container">
+        <h1>Shipping Slip Generator<br>Zardoz By Anas Traders</h1>
+        
+        <div class="input-group">
+            <div class="button-group">
+                <button class="upload-button camera-button" onclick="document.getElementById('cameraInput').click()">
+                    📷 Take Photo
+                </button>
+                <button class="upload-button gallery-button" onclick="document.getElementById('galleryInput').click()">
+                    🖼️ Choose from Gallery
+                </button>
+            </div>
+            <input type="file" id="cameraInput" class="file-input" accept="image/*" capture="environment">
+            <input type="file" id="galleryInput" class="file-input" accept="image/*">
+            <div class="upload-status" id="uploadStatus">
+                ✔️ Image uploaded successfully
+            </div>
+        </div>
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = document.createElement('img');
-        img.src = e.target.result;
-        img.id = 'tempImage';
-        document.body.appendChild(img);
-        img.style.maxWidth = '100%';
+        <div class="checkbox-container">
+            <input type="checkbox" id="twoSlips">
+            <label for="twoSlips">Generate two slips on one page</label>
+        </div>
 
-        cropper = new Cropper(img, {
-          aspectRatio: 2 / 1,
-          viewMode: 1,
-          autoCropArea: 1,
-          ready() {
-            const croppedCanvas = cropper.getCroppedCanvas();
-            document.getElementById('slipImage1').src = croppedCanvas.toDataURL();
-            document.getElementById('slipImage2').src = croppedCanvas.toDataURL();
-            cropper.destroy();
-            img.remove();
-          }
+        <button id="generateButton" disabled>Generate Shipping Slip</button>
+    </div>
+
+    <div class="cropper-container" id="cropperContainer">
+        <img id="cropperImage">
+        <div class="cropper-buttons">
+            <button class="cropper-button confirm-crop" id="confirmCrop">Confirm</button>
+            <button class="cropper-button cancel-crop" id="cancelCrop">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let cropper = null;
+        let croppedImage = null;
+
+        function handleImageInput(event) {
+            if (event.target.files && event.target.files[0]) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function(event) {
+                    document.getElementById('cropperContainer').style.display = 'block';
+                    const cropperImage = document.getElementById('cropperImage');
+                    cropperImage.src = event.target.result;
+
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+
+                    cropper = new Cropper(cropperImage, {
+                        aspectRatio: 16 / 9,
+                        viewMode: 1,
+                        autoCropArea: 1
+                    });
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.getElementById('cameraInput').addEventListener('change', handleImageInput);
+        document.getElementById('galleryInput').addEventListener('change', handleImageInput);
+
+        document.getElementById('confirmCrop').addEventListener('click', function() {
+            if (cropper) {
+                croppedImage = cropper.getCroppedCanvas().toDataURL();
+                document.getElementById('cropperContainer').style.display = 'none';
+                document.getElementById('uploadStatus').style.display = 'flex';
+                document.getElementById('generateButton').disabled = false;
+            }
         });
-      }
-      reader.readAsDataURL(file);
-    }
 
-    function printSlips() {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html><head><title>Print Slips</title>
-        <style>
-          .slip {
-            width: 48%;
-            display: inline-block;
-            margin: 1%;
-            padding: 10px;
-            box-sizing: border-box;
-            height: 148mm;
-            width: 105mm;
-            border: 1px dashed #ccc;
-            background: white;
-            position: relative;
-            font-family: 'Segoe UI', sans-serif;
-            text-align: center;
-          }
-          .slip img {
-            max-width: 100%;
-            max-height: 60px;
-            margin-bottom: 10px;
-          }
-        </style>
-        </head><body>
-        ${document.getElementById('slipsContainer').innerHTML}
-        <script>window.onload = function() { window.print(); }</script>
-        </body></html>
-      `);
-      printWindow.document.close();
-    }
-  </script>
+        document.getElementById('cancelCrop').addEventListener('click', function() {
+            document.getElementById('cropperContainer').style.display = 'none';
+            document.getElementById('cameraInput').value = '';
+            document.getElementById('galleryInput').value = '';
+            document.getElementById('uploadStatus').style.display = 'none';
+            document.getElementById('generateButton').disabled = true;
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        });
+
+        document.getElementById('generateButton').addEventListener('click', function() {
+            if (!croppedImage) return;
+
+            const twoSlips = document.getElementById('twoSlips').checked;
+            const printWindow = window.open('', '_blank');
+            const currentDate = new Date().toLocaleString();
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        @page {
+                            size: A4 landscape;
+                            margin: 0;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .shipping-slip {
+                            width: 100%;
+                            height: 148mm;
+                            padding: 10mm;
+                            box-sizing: border-box;
+                            page-break-after: always;
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 5mm;
+                        }
+                        .image-container {
+                            flex: 1;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        .image-container img {
+                            max-width: 90%;
+                            max-height: 100mm;
+                            object-fit: contain;
+                        }
+                        .footer {
+                            text-align: center;
+                            margin-top: 5mm;
+                            font-size: 12px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="shipping-slip">
+                        <div class="header">
+                            <h2>Zardoz By Anas Traders</h2>
+                            <p>Chandni Chowk</p>
+                            <p>${currentDate}</p>
+                        </div>
+                        <div class="image-container">
+                            <img src="${croppedImage}">
+                        </div>
+                        <div class="footer">
+                            <p>Shipping Slip</p>
+                        </div>
+                    </div>
+                    ${twoSlips ? `
+                    <div class="shipping-slip">
+                        <div class="header">
+                            <h2>Zardoz By Anas Traders</h2>
+                            <p>Chandni Chowk</p>
+                            <p>${currentDate}</p>
+                        </div>
+                        <div class="image-container">
+                            <img src="${croppedImage}">
+                        </div>
+                        <div class="footer">
+                            <p>Shipping Slip</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                </body>
+                </html>
+            `);
+
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        });
+    </script>
 </body>
 </html>
