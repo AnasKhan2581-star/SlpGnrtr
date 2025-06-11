@@ -6,6 +6,7 @@
     <title>Shipping Slip Generator - Zardoz By Anas Traders</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <style>
         * {
             margin: 0;
@@ -36,8 +37,17 @@
             line-height: 1.4;
         }
 
-        .input-group {
+        .slip-section {
             margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .slip-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2196F3;
         }
 
         .button-group {
@@ -82,16 +92,6 @@
             display: none;
         }
 
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 15px 0;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-
         #generateButton {
             width: 100%;
             padding: 12px;
@@ -102,6 +102,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: background 0.3s;
+            margin-top: 20px;
         }
 
         #generateButton:hover {
@@ -124,8 +125,11 @@
             color: #2e7d32;
         }
 
-        .upload-status i {
-            font-size: 20px;
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: #2196F3;
         }
 
         .cropper-container {
@@ -181,7 +185,7 @@
                 display: block !important;
                 width: 100%;
                 height: 148mm;
-                page-break-after: always;
+                page-break-after: auto;
             }
         }
 
@@ -208,28 +212,47 @@
     <div class="container">
         <h1>Shipping Slip Generator<br>Zardoz By Anas Traders</h1>
         
-        <div class="input-group">
+        <div class="slip-section">
+            <div class="slip-header">Slip 1</div>
             <div class="button-group">
-                <button class="upload-button camera-button" onclick="document.getElementById('cameraInput').click()">
+                <button class="upload-button camera-button" onclick="document.getElementById('cameraInput1').click()">
                     📷 Take Photo
                 </button>
-                <button class="upload-button gallery-button" onclick="document.getElementById('galleryInput').click()">
+                <button class="upload-button gallery-button" onclick="document.getElementById('galleryInput1').click()">
                     🖼️ Choose from Gallery
                 </button>
             </div>
-            <input type="file" id="cameraInput" class="file-input" accept="image/*" capture="environment">
-            <input type="file" id="galleryInput" class="file-input" accept="image/*">
-            <div class="upload-status" id="uploadStatus">
+            <input type="file" id="cameraInput1" class="file-input" accept="image/*" capture="environment">
+            <input type="file" id="galleryInput1" class="file-input" accept="image/*">
+            <div class="upload-status" id="uploadStatus1">
                 ✔️ Image uploaded successfully
+            </div>
+            <div class="loading-indicator" id="loadingIndicator1">
+                Processing image... Please wait.
             </div>
         </div>
 
-        <div class="checkbox-container">
-            <input type="checkbox" id="twoSlips">
-            <label for="twoSlips">Generate two slips on one page</label>
+        <div class="slip-section">
+            <div class="slip-header">Slip 2</div>
+            <div class="button-group">
+                <button class="upload-button camera-button" onclick="document.getElementById('cameraInput2').click()">
+                    📷 Take Photo
+                </button>
+                <button class="upload-button gallery-button" onclick="document.getElementById('galleryInput2').click()">
+                    🖼️ Choose from Gallery
+                </button>
+            </div>
+            <input type="file" id="cameraInput2" class="file-input" accept="image/*" capture="environment">
+            <input type="file" id="galleryInput2" class="file-input" accept="image/*">
+            <div class="upload-status" id="uploadStatus2">
+                ✔️ Image uploaded successfully
+            </div>
+            <div class="loading-indicator" id="loadingIndicator2">
+                Processing image... Please wait.
+            </div>
         </div>
 
-        <button id="generateButton" disabled>Generate Shipping Slip</button>
+        <button id="generateButton" disabled>Generate Shipping Slips</button>
     </div>
 
     <div class="cropper-container" id="cropperContainer">
@@ -242,10 +265,19 @@
 
     <script>
         let cropper = null;
-        let croppedImage = null;
+        let currentSlipNumber = null;
+        let extractedTexts = {
+            slip1: null,
+            slip2: null
+        };
+        let croppedImages = {
+            slip1: null,
+            slip2: null
+        };
 
-        function handleImageInput(event) {
+        function handleImageInput(event, slipNumber) {
             if (event.target.files && event.target.files[0]) {
+                currentSlipNumber = slipNumber;
                 const file = event.target.files[0];
                 const reader = new FileReader();
 
@@ -269,24 +301,53 @@
             }
         }
 
-        document.getElementById('cameraInput').addEventListener('change', handleImageInput);
-        document.getElementById('galleryInput').addEventListener('change', handleImageInput);
+        async function processImage(imageData, slipNumber) {
+            document.getElementById(`loadingIndicator${slipNumber}`).style.display = 'block';
+            
+            try {
+                const result = await Tesseract.recognize(
+                    imageData,
+                    'eng',
+                    { logger: m => console.log(m) }
+                );
+                
+                extractedTexts[`slip${slipNumber}`] = result.data.text;
+                document.getElementById(`uploadStatus${slipNumber}`).style.display = 'flex';
+                document.getElementById(`loadingIndicator${slipNumber}`).style.display = 'none';
+                
+                if (extractedTexts.slip1 || extractedTexts.slip2) {
+                    document.getElementById('generateButton').disabled = false;
+                }
+            } catch (error) {
+                console.error('OCR Error:', error);
+                alert('Error processing image. Please try again.');
+                document.getElementById(`loadingIndicator${slipNumber}`).style.display = 'none';
+            }
+        }
+
+        ['1', '2'].forEach(slipNumber => {
+            document.getElementById(`cameraInput${slipNumber}`).addEventListener('change', 
+                (e) => handleImageInput(e, slipNumber));
+            document.getElementById(`galleryInput${slipNumber}`).addEventListener('change', 
+                (e) => handleImageInput(e, slipNumber));
+        });
 
         document.getElementById('confirmCrop').addEventListener('click', function() {
-            if (cropper) {
-                croppedImage = cropper.getCroppedCanvas().toDataURL();
+            if (cropper && currentSlipNumber) {
+                const croppedImage = cropper.getCroppedCanvas().toDataURL();
+                croppedImages[`slip${currentSlipNumber}`] = croppedImage;
                 document.getElementById('cropperContainer').style.display = 'none';
-                document.getElementById('uploadStatus').style.display = 'flex';
-                document.getElementById('generateButton').disabled = false;
+                processImage(croppedImage, currentSlipNumber);
             }
         });
 
         document.getElementById('cancelCrop').addEventListener('click', function() {
             document.getElementById('cropperContainer').style.display = 'none';
-            document.getElementById('cameraInput').value = '';
-            document.getElementById('galleryInput').value = '';
-            document.getElementById('uploadStatus').style.display = 'none';
-            document.getElementById('generateButton').disabled = true;
+            if (currentSlipNumber) {
+                document.getElementById(`cameraInput${currentSlipNumber}`).value = '';
+                document.getElementById(`galleryInput${currentSlipNumber}`).value = '';
+                document.getElementById(`uploadStatus${currentSlipNumber}`).style.display = 'none';
+            }
             if (cropper) {
                 cropper.destroy();
                 cropper = null;
@@ -294,9 +355,6 @@
         });
 
         document.getElementById('generateButton').addEventListener('click', function() {
-            if (!croppedImage) return;
-
-            const twoSlips = document.getElementById('twoSlips').checked;
             const printWindow = window.open('', '_blank');
             const currentDate = new Date().toLocaleString();
 
@@ -318,61 +376,63 @@
                             height: 148mm;
                             padding: 10mm;
                             box-sizing: border-box;
-                            page-break-after: always;
-                            display: flex;
-                            flex-direction: column;
+                            page-break-after: auto;
+                            border-bottom: 1px dashed #000;
                         }
                         .header {
                             text-align: center;
                             margin-bottom: 5mm;
+                            font-family: Arial, sans-serif;
                         }
-                        .image-container {
-                            flex: 1;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        }
-                        .image-container img {
-                            max-width: 90%;
-                            max-height: 100mm;
-                            object-fit: contain;
+                        .content {
+                            margin: 5mm 0;
+                            font-family: Arial, sans-serif;
+                            white-space: pre-line;
                         }
                         .footer {
                             text-align: center;
                             margin-top: 5mm;
                             font-size: 12px;
+                            font-family: Arial, sans-serif;
                         }
                     </style>
                 </head>
                 <body>
+            `);
+
+            // Add first slip if exists
+            if (extractedTexts.slip1) {
+                printWindow.document.write(`
                     <div class="shipping-slip">
                         <div class="header">
-                            <h2>Zardoz By Anas Traders</h2>
+                            <h2>From: Zardoz By Anas Traders</h2>
                             <p>Chandni Chowk</p>
                             <p>${currentDate}</p>
                         </div>
-                        <div class="image-container">
-                            <img src="${croppedImage}">
-                        </div>
-                        <div class="footer">
-                            <p>Shipping Slip</p>
+                        <div class="content">
+                            ${extractedTexts.slip1}
                         </div>
                     </div>
-                    ${twoSlips ? `
+                `);
+            }
+
+            // Add second slip if exists
+            if (extractedTexts.slip2) {
+                printWindow.document.write(`
                     <div class="shipping-slip">
                         <div class="header">
-                            <h2>Zardoz By Anas Traders</h2>
+                            <h2>From: Zardoz By Anas Traders</h2>
                             <p>Chandni Chowk</p>
                             <p>${currentDate}</p>
                         </div>
-                        <div class="image-container">
-                            <img src="${croppedImage}">
-                        </div>
-                        <div class="footer">
-                            <p>Shipping Slip</p>
+                        <div class="content">
+                            ${extractedTexts.slip2}
                         </div>
                     </div>
-                    ` : ''}
+                `);
+            }
+
+            printWindow.document.write(`
                 </body>
                 </html>
             `);
