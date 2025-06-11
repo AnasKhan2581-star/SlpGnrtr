@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Shipping Slip Generator - Zardoz By Anas Traders</title>
-    <!-- Add html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
@@ -112,18 +111,12 @@
             background: #1976D2;
         }
 
-        @media (max-width: 480px) {
-            .container {
-                padding: 15px;
-            }
+        #addSlipButton {
+            background: #4CAF50;
+        }
 
-            h1 {
-                font-size: 20px;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
+        #addSlipButton:hover {
+            background: #45a049;
         }
 
         .loading {
@@ -140,45 +133,46 @@
             font-size: 18px;
             z-index: 1000;
         }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Shipping Slip Generator<br>Zardoz By Anas Traders</h1>
         
-        <div class="slip-section">
-            <div class="slip-header">Slip 1</div>
-            <div class="input-group">
-                <label for="name1">Name</label>
-                <input type="text" id="name1" placeholder="Enter recipient's name">
-            </div>
-            <div class="input-group">
-                <label for="address1">Address</label>
-                <textarea id="address1" placeholder="Enter complete address"></textarea>
-            </div>
-            <div class="input-group">
-                <label for="mobile1">Mobile Number</label>
-                <input type="tel" id="mobile1" placeholder="Enter mobile number">
-            </div>
-        </div>
-
-        <div class="slip-section">
-            <div class="slip-header">Slip 2</div>
-            <div class="input-group">
-                <label for="name2">Name</label>
-                <input type="text" id="name2" placeholder="Enter recipient's name">
-            </div>
-            <div class="input-group">
-                <label for="address2">Address</label>
-                <textarea id="address2" placeholder="Enter complete address"></textarea>
-            </div>
-            <div class="input-group">
-                <label for="mobile2">Mobile Number</label>
-                <input type="tel" id="mobile2" placeholder="Enter mobile number">
+        <div id="slips-container">
+            <div class="slip-section">
+                <div class="slip-header">Shipping Slip</div>
+                <div class="input-group">
+                    <label for="name1">Name</label>
+                    <input type="text" id="name1" placeholder="Enter recipient's name">
+                </div>
+                <div class="input-group">
+                    <label for="address1">Address</label>
+                    <textarea id="address1" placeholder="Enter complete address"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="mobile1">Mobile Number</label>
+                    <input type="tel" id="mobile1" placeholder="Enter mobile number">
+                </div>
             </div>
         </div>
 
         <div class="button-group">
+            <button id="addSlipButton">➕ Add New Slip</button>
             <button id="generateButton">🖨️ Print Slips</button>
             <button id="shareButton">📤 Share Slips</button>
         </div>
@@ -187,9 +181,7 @@
     <script>
         function formatDateTime() {
             const now = new Date();
-            // Convert to IST (UTC+5:30)
             const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-            
             const pad = (n) => String(n).padStart(2, '0');
             
             const day = pad(ist.getUTCDate());
@@ -199,16 +191,15 @@
             const minutes = pad(ist.getUTCMinutes());
             const seconds = pad(ist.getUTCSeconds());
 
-            // Convert to 12-hour format
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours ? hours : 12; // the hour '0' should be '12'
+            hours = hours ? hours : 12;
             const formattedHours = pad(hours);
 
             return `${day}-${month}-${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
         }
 
-        function generateSlipHTML(name, address, mobile, currentDate, isFirst = true) {
+        function generateSlipHTML(name, address, mobile, currentDate) {
             if (!name && !address && !mobile) return '';
             
             return `
@@ -218,8 +209,8 @@
                     padding: 20mm;
                     box-sizing: border-box;
                     position: relative;
-                    ${isFirst ? 'border-bottom: 1px dashed #000;' : ''}
                     background: white;
+                    page-break-after: always;
                 ">
                     <div style="
                         position: absolute;
@@ -227,7 +218,7 @@
                         right: 10mm;
                         font-size: 12px;
                     ">${currentDate}</div>
-                    <div style="margin-top: 20mm;">
+                    <div style="margin-top: 10mm;">
                         <div style="
                             font-weight: bold;
                             font-size: 18px;
@@ -288,14 +279,7 @@
             showLoading();
             
             const currentDate = formatDateTime();
-            const name1 = document.getElementById('name1').value;
-            const address1 = document.getElementById('address1').value;
-            const mobile1 = document.getElementById('mobile1').value;
-            const name2 = document.getElementById('name2').value;
-            const address2 = document.getElementById('address2').value;
-            const mobile2 = document.getElementById('mobile2').value;
-
-            const htmlContent = `
+            let htmlContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -307,11 +291,21 @@
                     </style>
                 </head>
                 <body>
-                    ${generateSlipHTML(name1, address1, mobile1, currentDate, true)}
-                    ${generateSlipHTML(name2, address2, mobile2, currentDate, false)}
-                </body>
-                </html>
             `;
+
+            // Gather all slips
+            const slips = document.querySelectorAll('.slip-section');
+            slips.forEach((slip, index) => {
+                const name = document.getElementById(`name${index + 1}`).value;
+                const address = document.getElementById(`address${index + 1}`).value;
+                const mobile = document.getElementById(`mobile${index + 1}`).value;
+                
+                if (name || address || mobile) {
+                    htmlContent += generateSlipHTML(name, address, mobile, currentDate);
+                }
+            });
+
+            htmlContent += '</body></html>';
 
             try {
                 const element = document.createElement('div');
@@ -336,22 +330,27 @@
 
                 const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
                 document.body.removeChild(element);
-
+                
                 if (forSharing) {
                     return pdfBlob;
                 } else {
                     // For printing
                     const pdfUrl = URL.createObjectURL(pdfBlob);
-                    const printWindow = window.open(pdfUrl, '_blank');
-                    if (printWindow) {
-                        printWindow.onload = function() {
-                            printWindow.print();
-                            setTimeout(() => {
-                                URL.revokeObjectURL(pdfUrl);
-                                printWindow.close();
-                            }, 1000);
-                        };
-                    }
+                    const printWindow = window.open();
+                    printWindow.document.write(`
+                        <html>
+                        <body style='margin:0;'>
+                            <embed width='100%' height='100%' src='${pdfUrl}#toolbar=0&print-now=true' type='application/pdf'>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    setTimeout(() => {
+                        printWindow.print();
+                        printWindow.close();
+                        URL.revokeObjectURL(pdfUrl);
+                    }, 1000);
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -373,7 +372,6 @@
                         text: 'Shipping slips from Zardoz By Anas Traders'
                     });
                 } else {
-                    // Fallback for desktop or devices without share capability
                     const url = URL.createObjectURL(pdfBlob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -388,6 +386,29 @@
                 alert('Could not share the slips. Please try again.');
             }
         }
+
+        let slipCount = 1;
+        document.getElementById('addSlipButton').addEventListener('click', () => {
+            slipCount++;
+            const newSlip = document.createElement('div');
+            newSlip.className = 'slip-section';
+            newSlip.innerHTML = `
+                <div class="slip-header">Shipping Slip ${slipCount}</div>
+                <div class="input-group">
+                    <label for="name${slipCount}">Name</label>
+                    <input type="text" id="name${slipCount}" placeholder="Enter recipient's name">
+                </div>
+                <div class="input-group">
+                    <label for="address${slipCount}">Address</label>
+                    <textarea id="address${slipCount}" placeholder="Enter complete address"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="mobile${slipCount}">Mobile Number</label>
+                    <input type="tel" id="mobile${slipCount}" placeholder="Enter mobile number">
+                </div>
+            `;
+            document.getElementById('slips-container').appendChild(newSlip);
+        });
 
         document.getElementById('generateButton').addEventListener('click', () => generateAndDownloadPDF(false));
         document.getElementById('shareButton').addEventListener('click', sharePDF);
