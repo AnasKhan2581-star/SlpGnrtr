@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Shipping Slip Generator - Zardoz By Anas Traders</title>
+    <!-- Add html2pdf library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Previous CSS styles remain the same until print media query */
         * {
             margin: 0;
             padding: 0;
@@ -124,6 +125,21 @@
                 flex-direction: column;
             }
         }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -196,20 +212,32 @@
             if (!name && !address && !mobile) return '';
             
             return `
-                <div class="slip" style="
+                <div style="
                     width: 210mm;
                     min-height: 148.5mm;
-                    padding: 10mm;
+                    padding: 20mm;
                     box-sizing: border-box;
                     position: relative;
                     ${isFirst ? 'border-bottom: 1px dashed #000;' : ''}
+                    background: white;
                 ">
-                    <div style="position: absolute; top: 10mm; right: 10mm; font-size: 12px;">
-                        ${currentDate}
-                    </div>
+                    <div style="
+                        position: absolute;
+                        top: 10mm;
+                        right: 10mm;
+                        font-size: 12px;
+                    ">${currentDate}</div>
                     <div style="margin-top: 20mm;">
-                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 5mm;">To:</div>
-                        <div style="font-size: 20px; margin-left: 10mm; line-height: 1.4;">
+                        <div style="
+                            font-weight: bold;
+                            font-size: 18px;
+                            margin-bottom: 5mm;
+                        ">To:</div>
+                        <div style="
+                            font-size: 20px;
+                            margin-left: 10mm;
+                            line-height: 1.4;
+                        ">
                             ${name}<br>
                             ${address.replace(/\n/g, '<br>')}<br>
                             ${mobile ? `Mobile: ${mobile}` : ''}
@@ -217,14 +245,22 @@
                     </div>
                     <div style="
                         position: absolute;
-                        bottom: 10mm;
-                        left: 10mm;
-                        right: 10mm;
+                        bottom: 20mm;
+                        left: 20mm;
+                        right: 20mm;
                         border-top: 1px solid #000;
-                        padding-top: 5mm;
+                        padding-top: 10mm;
                     ">
-                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 5mm;">From:</div>
-                        <div style="font-size: 20px; margin-left: 10mm; line-height: 1.4;">
+                        <div style="
+                            font-weight: bold;
+                            font-size: 18px;
+                            margin-bottom: 5mm;
+                        ">From:</div>
+                        <div style="
+                            font-size: 20px;
+                            margin-left: 10mm;
+                            line-height: 1.4;
+                        ">
                             Zardoz By Anas Traders<br>
                             Chandni Chowk
                         </div>
@@ -233,7 +269,24 @@
             `;
         }
 
-        function generatePDF() {
+        function showLoading() {
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.id = 'loadingOverlay';
+            loading.textContent = 'Generating PDF...';
+            document.body.appendChild(loading);
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loadingOverlay');
+            if (loading) {
+                loading.remove();
+            }
+        }
+
+        async function generateAndDownloadPDF(forSharing = false) {
+            showLoading();
+            
             const currentDate = formatDateTime();
             const name1 = document.getElementById('name1').value;
             const address1 = document.getElementById('address1').value;
@@ -242,30 +295,15 @@
             const address2 = document.getElementById('address2').value;
             const mobile2 = document.getElementById('mobile2').value;
 
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+            const htmlContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Shipping Slips</title>
                     <style>
-                        @page {
-                            size: A4;
-                            margin: 0;
-                        }
-                        body {
-                            margin: 0;
-                            padding: 0;
-                            font-family: Arial, sans-serif;
-                            width: 210mm;
-                            background: white;
-                        }
-                        .slip {
-                            background: white;
-                            page-break-inside: avoid;
-                        }
+                        @page { size: A4; margin: 0; }
+                        body { margin: 0; font-family: Arial, sans-serif; }
                     </style>
                 </head>
                 <body>
@@ -273,66 +311,86 @@
                     ${generateSlipHTML(name2, address2, mobile2, currentDate, false)}
                 </body>
                 </html>
-            `);
-            
-            printWindow.document.close();
-
-            setTimeout(() => {
-                printWindow.focus();
-                printWindow.print();
-                printWindow.close();
-            }, 250);
-        }
-
-        async function shareSlips() {
-            const currentDate = formatDateTime();
-            const name1 = document.getElementById('name1').value;
-            const address1 = document.getElementById('address1').value;
-            const mobile1 = document.getElementById('mobile1').value;
-            const name2 = document.getElementById('name2').value;
-            const address2 = document.getElementById('address2').value;
-            const mobile2 = document.getElementById('mobile2').value;
-
-            const textContent = `
-Shipping Details (${currentDate})
-
-Slip 1:
-To: ${name1}
-Address: ${address1}
-Mobile: ${mobile1}
-
-Slip 2:
-To: ${name2}
-Address: ${address2}
-Mobile: ${mobile2}
-
-From:
-Zardoz By Anas Traders
-Chandni Chowk`;
+            `;
 
             try {
-                if (navigator.share) {
+                const element = document.createElement('div');
+                element.innerHTML = htmlContent;
+                document.body.appendChild(element);
+
+                const opt = {
+                    margin: 0,
+                    filename: 'shipping_slips.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { 
+                        scale: 2,
+                        useCORS: true,
+                        letterRendering: true
+                    },
+                    jsPDF: { 
+                        unit: 'mm', 
+                        format: 'a4', 
+                        orientation: 'portrait'
+                    }
+                };
+
+                const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+                document.body.removeChild(element);
+
+                if (forSharing) {
+                    return pdfBlob;
+                } else {
+                    // For printing
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+                    const printWindow = window.open(pdfUrl, '_blank');
+                    if (printWindow) {
+                        printWindow.onload = function() {
+                            printWindow.print();
+                            setTimeout(() => {
+                                URL.revokeObjectURL(pdfUrl);
+                                printWindow.close();
+                            }, 1000);
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error generating PDF. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function sharePDF() {
+            try {
+                const pdfBlob = await generateAndDownloadPDF(true);
+                const file = new File([pdfBlob], 'shipping_slips.pdf', { type: 'application/pdf' });
+
+                if (navigator.share && navigator.canShare({ files: [file] })) {
                     await navigator.share({
+                        files: [file],
                         title: 'Shipping Slips',
-                        text: textContent
+                        text: 'Shipping slips from Zardoz By Anas Traders'
                     });
                 } else {
-                    const blob = new Blob([textContent], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
+                    // Fallback for desktop or devices without share capability
+                    const url = URL.createObjectURL(pdfBlob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'shipping_slips.txt';
+                    a.download = 'shipping_slips.pdf';
+                    document.body.appendChild(a);
                     a.click();
+                    document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                 }
             } catch (error) {
                 console.error('Error sharing:', error);
-                alert('Could not share the slips. Please try using the Print button instead.');
+                alert('Could not share the slips. Please try again.');
             }
         }
 
-        document.getElementById('generateButton').addEventListener('click', generatePDF);
-        document.getElementById('shareButton').addEventListener('click', shareSlips);
+        document.getElementById('generateButton').addEventListener('click', () => generateAndDownloadPDF(false));
+        document.getElementById('shareButton').addEventListener('click', sharePDF);
     </script>
 </body>
 </html>
