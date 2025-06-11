@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Shipping Slip Generator - Zardoz By Anas Traders</title>
     <style>
+        /* Previous CSS styles remain the same until print media query */
         * {
             margin: 0;
             padding: 0;
@@ -123,20 +124,6 @@
                 flex-direction: column;
             }
         }
-
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printSection, #printSection * {
-                visibility: visible;
-            }
-            #printSection {
-                position: absolute;
-                left: 0;
-                top: 0;
-            }
-        }
     </style>
 </head>
 <body>
@@ -196,7 +183,7 @@
             const minutes = pad(ist.getUTCMinutes());
             const seconds = pad(ist.getUTCSeconds());
 
-            // Convert to 12-hour format with AM/PM
+            // Convert to 12-hour format
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
             hours = hours ? hours : 12; // the hour '0' should be '12'
@@ -205,25 +192,39 @@
             return `${day}-${month}-${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
         }
 
-        function generateSlipContent(name, address, mobile, currentDate) {
+        function generateSlipHTML(name, address, mobile, currentDate, isFirst = true) {
             if (!name && !address && !mobile) return '';
             
             return `
-                <div style="width: 210mm; height: 148.5mm; padding: 20mm; page-break-after: always;">
-                    <div style="position: absolute; top: 8mm; right: 8mm; font-size: 12px;">
+                <div class="slip" style="
+                    width: 210mm;
+                    min-height: 148.5mm;
+                    padding: 10mm;
+                    box-sizing: border-box;
+                    position: relative;
+                    ${isFirst ? 'border-bottom: 1px dashed #000;' : ''}
+                ">
+                    <div style="position: absolute; top: 10mm; right: 10mm; font-size: 12px;">
                         ${currentDate}
                     </div>
-                    <div style="margin-bottom: 15mm;">
-                        <div style="font-weight: bold; margin-bottom: 5mm;">To:</div>
-                        <div style="font-size: 24px; margin-left: 10mm;">
+                    <div style="margin-top: 20mm;">
+                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 5mm;">To:</div>
+                        <div style="font-size: 20px; margin-left: 10mm; line-height: 1.4;">
                             ${name}<br>
                             ${address.replace(/\n/g, '<br>')}<br>
                             ${mobile ? `Mobile: ${mobile}` : ''}
                         </div>
                     </div>
-                    <div style="position: absolute; bottom: 20mm; left: 20mm; right: 20mm; border-top: 1px solid #000; padding-top: 10mm;">
-                        <div style="font-weight: bold; margin-bottom: 5mm;">From:</div>
-                        <div style="font-size: 24px; margin-left: 10mm;">
+                    <div style="
+                        position: absolute;
+                        bottom: 10mm;
+                        left: 10mm;
+                        right: 10mm;
+                        border-top: 1px solid #000;
+                        padding-top: 5mm;
+                    ">
+                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 5mm;">From:</div>
+                        <div style="font-size: 20px; margin-left: 10mm; line-height: 1.4;">
                             Zardoz By Anas Traders<br>
                             Chandni Chowk
                         </div>
@@ -246,16 +247,30 @@
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Shipping Slips</title>
                     <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Shipping Slips</title>
                     <style>
-                        @page { size: A4; margin: 0; }
-                        body { margin: 0; font-family: Arial, sans-serif; }
+                        @page {
+                            size: A4;
+                            margin: 0;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            font-family: Arial, sans-serif;
+                            width: 210mm;
+                            background: white;
+                        }
+                        .slip {
+                            background: white;
+                            page-break-inside: avoid;
+                        }
                     </style>
                 </head>
                 <body>
-                    ${generateSlipContent(name1, address1, mobile1, currentDate)}
-                    ${generateSlipContent(name2, address2, mobile2, currentDate)}
+                    ${generateSlipHTML(name1, address1, mobile1, currentDate, true)}
+                    ${generateSlipHTML(name2, address2, mobile2, currentDate, false)}
                 </body>
                 </html>
             `);
@@ -263,11 +278,10 @@
             printWindow.document.close();
 
             setTimeout(() => {
+                printWindow.focus();
                 printWindow.print();
-                setTimeout(() => {
-                    printWindow.close();
-                }, 1000);
-            }, 500);
+                printWindow.close();
+            }, 250);
         }
 
         async function shareSlips() {
@@ -294,8 +308,7 @@ Mobile: ${mobile2}
 
 From:
 Zardoz By Anas Traders
-Chandni Chowk
-            `.trim();
+Chandni Chowk`;
 
             try {
                 if (navigator.share) {
@@ -304,15 +317,12 @@ Chandni Chowk
                         text: textContent
                     });
                 } else {
-                    // Fallback for desktop or devices without share capability
                     const blob = new Blob([textContent], { type: 'text/plain' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = 'shipping_slips.txt';
-                    document.body.appendChild(a);
                     a.click();
-                    document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                 }
             } catch (error) {
