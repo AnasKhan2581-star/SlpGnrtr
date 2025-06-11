@@ -199,18 +199,23 @@
             return `${day}-${month}-${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
         }
 
-        function generateSlipHTML(name, address, mobile, currentDate) {
+        function generateSlipHTML(name, address, mobile, currentDate, position) {
             if (!name && !address && !mobile) return '';
+            
+            // Calculate positions and page breaks
+            const isNewPage = position % 2 === 1 && position > 1;
+            const isTopHalf = position % 2 === 1;
             
             return `
                 <div style="
                     width: 210mm;
-                    min-height: 148.5mm;
+                    height: 148.5mm;
                     padding: 20mm;
                     box-sizing: border-box;
                     position: relative;
                     background: white;
-                    page-break-after: always;
+                    ${isNewPage ? 'page-break-before: always;' : ''}
+                    ${!isTopHalf ? 'border-top: 1px dashed #000;' : ''}
                 ">
                     <div style="
                         position: absolute;
@@ -221,11 +226,11 @@
                     <div style="margin-top: 10mm;">
                         <div style="
                             font-weight: bold;
-                            font-size: 18px;
+                            font-size: 16px;
                             margin-bottom: 5mm;
                         ">To:</div>
                         <div style="
-                            font-size: 20px;
+                            font-size: 16px;
                             margin-left: 10mm;
                             line-height: 1.4;
                         ">
@@ -244,11 +249,11 @@
                     ">
                         <div style="
                             font-weight: bold;
-                            font-size: 18px;
+                            font-size: 16px;
                             margin-bottom: 5mm;
                         ">From:</div>
                         <div style="
-                            font-size: 20px;
+                            font-size: 16px;
                             margin-left: 10mm;
                             line-height: 1.4;
                         ">
@@ -293,16 +298,28 @@
                 <body>
             `;
 
-            // Gather all slips
+            // Gather all filled slips
             const slips = document.querySelectorAll('.slip-section');
+            let filledSlips = [];
             slips.forEach((slip, index) => {
                 const name = document.getElementById(`name${index + 1}`).value;
                 const address = document.getElementById(`address${index + 1}`).value;
                 const mobile = document.getElementById(`mobile${index + 1}`).value;
                 
                 if (name || address || mobile) {
-                    htmlContent += generateSlipHTML(name, address, mobile, currentDate);
+                    filledSlips.push({ name, address, mobile });
                 }
+            });
+
+            // Generate HTML for all filled slips
+            filledSlips.forEach((slip, index) => {
+                htmlContent += generateSlipHTML(
+                    slip.name, 
+                    slip.address, 
+                    slip.mobile, 
+                    currentDate, 
+                    index + 1
+                );
             });
 
             htmlContent += '</body></html>';
