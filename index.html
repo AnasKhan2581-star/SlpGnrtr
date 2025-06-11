@@ -356,7 +356,21 @@
 
         document.getElementById('generateButton').addEventListener('click', function() {
             const printWindow = window.open('', '_blank');
-            const currentDate = new Date().toLocaleString();
+            
+            // Get current date and time in IST
+            const options = {
+                timeZone: 'Asia/Kolkata',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            
+            const currentDate = new Date().toLocaleString('en-GB', options)
+                .replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$2-$1');
 
             printWindow.document.write(`
                 <!DOCTYPE html>
@@ -370,66 +384,91 @@
                         body {
                             margin: 0;
                             padding: 0;
+                            font-family: Arial, sans-serif;
                         }
                         .shipping-slip {
                             width: 100%;
                             height: 148mm;
-                            padding: 10mm;
+                            padding: 15mm;
                             box-sizing: border-box;
                             page-break-after: auto;
                             border-bottom: 1px dashed #000;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between;
                         }
-                        .header {
-                            text-align: center;
+                        .date {
+                            text-align: right;
+                            font-size: 14px;
+                            margin-bottom: 10mm;
+                        }
+                        .content-wrapper {
+                            width: 80%;
+                            margin: 0 auto;
+                        }
+                        .to-section {
                             margin-bottom: 5mm;
-                            font-family: Arial, sans-serif;
                         }
-                        .content {
-                            margin: 5mm 0;
-                            font-family: Arial, sans-serif;
+                        .to-label {
+                            font-size: 20px;
+                            font-weight: bold;
+                            margin-bottom: 5mm;
+                        }
+                        .address-content {
+                            font-size: 30px;
+                            line-height: 1.3;
                             white-space: pre-line;
+                            text-align: left;
+                            margin-left: 20px;
                         }
-                        .footer {
-                            text-align: center;
-                            margin-top: 5mm;
-                            font-size: 12px;
-                            font-family: Arial, sans-serif;
+                        .from-section {
+                            margin-top: auto;
+                            border-top: 1px solid #000;
+                            padding-top: 5mm;
+                            font-size: 16px;
+                            text-align: left;
+                        }
+                        .from-label {
+                            font-weight: bold;
+                            margin-bottom: 2mm;
                         }
                     </style>
                 </head>
                 <body>
             `);
 
-            // Add first slip if exists
-            if (extractedTexts.slip1) {
-                printWindow.document.write(`
+            // Function to create a slip
+            function createSlip(text) {
+                return `
                     <div class="shipping-slip">
-                        <div class="header">
-                            <h2>From: Zardoz By Anas Traders</h2>
-                            <p>Chandni Chowk</p>
-                            <p>${currentDate}</p>
-                        </div>
-                        <div class="content">
-                            ${extractedTexts.slip1}
+                        <div class="content-wrapper">
+                            <div class="date">
+                                ${currentDate} IST
+                            </div>
+                            <div class="to-section">
+                                <div class="to-label">To:</div>
+                                <div class="address-content">
+                                    ${text.trim()}
+                                </div>
+                            </div>
+                            <div class="from-section">
+                                <div class="from-label">From:</div>
+                                Zardoz By Anas Traders<br>
+                                Chandni Chowk
+                            </div>
                         </div>
                     </div>
-                `);
+                `;
+            }
+
+            // Add first slip if exists
+            if (extractedTexts.slip1) {
+                printWindow.document.write(createSlip(extractedTexts.slip1));
             }
 
             // Add second slip if exists
             if (extractedTexts.slip2) {
-                printWindow.document.write(`
-                    <div class="shipping-slip">
-                        <div class="header">
-                            <h2>From: Zardoz By Anas Traders</h2>
-                            <p>Chandni Chowk</p>
-                            <p>${currentDate}</p>
-                        </div>
-                        <div class="content">
-                            ${extractedTexts.slip2}
-                        </div>
-                    </div>
-                `);
+                printWindow.document.write(createSlip(extractedTexts.slip2));
             }
 
             printWindow.document.write(`
