@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Shipping Slip Generator - Zardoz By Anas Traders</title>
     <style>
         * {
@@ -90,12 +90,6 @@
             background: #f4511e;
         }
 
-        @media print {
-            .container {
-                display: none;
-            }
-        }
-
         @media (max-width: 480px) {
             .container {
                 padding: 15px;
@@ -147,27 +141,25 @@
     </div>
 
     <script>
-        document.getElementById('generateButton').addEventListener('click', function() {
+        function formatDateTime(date) {
+            const pad = (n) => n.toString().padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        }
+
+        function generatePDF() {
             const printWindow = window.open('', '_blank');
             
             // Get current date and time in IST
-            const options = {
-                timeZone: 'Asia/Kolkata',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            };
-            
-            const currentDate = new Date().toLocaleString('en-GB', options)
-                .replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$2-$1');
+            const date = new Date();
+            const istTime = new Date(date.getTime() + (5.5 * 60 * 60 * 1000)); // Convert to IST
+            const formattedDate = formatDateTime(istTime);
 
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <style>
                         @page {
                             size: A4 landscape;
@@ -177,101 +169,123 @@
                             margin: 0;
                             padding: 0;
                             font-family: Arial, sans-serif;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
                         }
                         .shipping-slip {
-                            width: 100%;
-                            height: 148mm;
-                            padding: 15mm;
+                            width: 297mm;
+                            height: 148.5mm;
+                            padding: 10mm;
                             box-sizing: border-box;
-                            page-break-after: auto;
+                            page-break-after: always;
+                            position: relative;
                             border-bottom: 1px dashed #000;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: space-between;
                         }
                         .date {
-                            text-align: right;
+                            position: absolute;
+                            top: 10mm;
+                            right: 10mm;
                             font-size: 14px;
-                            margin-bottom: 10mm;
                         }
                         .content-wrapper {
-                            width: 80%;
+                            width: 90%;
+                            max-width: 250mm;
                             margin: 0 auto;
+                            padding-top: 20mm;
                         }
                         .to-section {
-                            margin-bottom: 5mm;
+                            margin-bottom: 10mm;
                         }
                         .to-label {
-                            font-size: 20px;
+                            font-size: 22px;
                             font-weight: bold;
-                            margin-bottom: 5mm;
+                            margin-bottom: 6mm;
                         }
                         .address-content {
                             font-size: 30px;
-                            line-height: 1.3;
+                            line-height: 1.4;
                             white-space: pre-line;
-                            text-align: left;
-                            margin-left: 20px;
+                            margin-left: 25px;
                         }
                         .from-section {
-                            margin-top: auto;
-                            border-top: 1px solid #000;
+                            position: absolute;
+                            bottom: 10mm;
+                            left: 10%;
+                            width: 80%;
                             padding-top: 5mm;
-                            font-size: 30px;
-                            line-height: 1.3;
-                            text-align: left;
+                            border-top: 1px solid #000;
                         }
                         .from-label {
-                            font-size: 20px;
+                            font-size: 22px;
                             font-weight: bold;
-                            margin-bottom: 2mm;
+                            margin-bottom: 3mm;
                         }
-                        .mobile {
-                            margin-top: 5px;
+                        .from-content {
+                            font-size: 30px;
+                            line-height: 1.4;
+                            margin-left: 25px;
+                        }
+                        @media print {
+                            html, body {
+                                width: 297mm;
+                                height: 210mm;
+                                margin: 0;
+                                padding: 0;
+                            }
+                        }
+                        @media screen and (-webkit-min-device-pixel-ratio:0) {
+                            body {
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
                         }
                     </style>
                 </head>
                 <body>
             `);
 
-            // Function to create a slip
             function createSlip(name, address, mobile) {
                 if (!name && !address && !mobile) return '';
+                
+                const addressLines = address.split('\n');
+                const formattedAddress = addressLines.join('\n');
+
                 return `
                     <div class="shipping-slip">
+                        <div class="date">
+                            ${formattedDate} IST
+                        </div>
                         <div class="content-wrapper">
-                            <div class="date">
-                                ${currentDate} IST
-                            </div>
                             <div class="to-section">
                                 <div class="to-label">To:</div>
                                 <div class="address-content">
                                     ${name}
-                                    ${address}
+                                    ${formattedAddress}
                                     ${mobile ? `\nMobile: ${mobile}` : ''}
                                 </div>
                             </div>
                             <div class="from-section">
                                 <div class="from-label">From:</div>
-                                Zardoz By Anas Traders
-                                Chandni Chowk
+                                <div class="from-content">
+                                    Zardoz By Anas Traders
+                                    Chandni Chowk
+                                </div>
                             </div>
                         </div>
                     </div>
                 `;
             }
 
-            // Get values for first slip
+            // Get values for slips
             const name1 = document.getElementById('name1').value;
             const address1 = document.getElementById('address1').value;
             const mobile1 = document.getElementById('mobile1').value;
 
-            // Get values for second slip
             const name2 = document.getElementById('name2').value;
             const address2 = document.getElementById('address2').value;
             const mobile2 = document.getElementById('mobile2').value;
 
-            // Add slips if they have content
+            // Add slips
             printWindow.document.write(createSlip(name1, address1, mobile1));
             printWindow.document.write(createSlip(name2, address2, mobile2));
 
@@ -280,12 +294,23 @@
                 </html>
             `);
 
+            // For Samsung devices
+            if (navigator.userAgent.match(/Samsung|Galaxy/i)) {
+                printWindow.document.title = "Shipping_Slip.pdf";
+            }
+
             printWindow.document.close();
+
+            // Delay for better compatibility
             setTimeout(() => {
                 printWindow.print();
-                printWindow.close();
+                setTimeout(() => {
+                    printWindow.close();
+                }, 1000);
             }, 500);
-        });
+        }
+
+        document.getElementById('generateButton').addEventListener('click', generatePDF);
     </script>
 </body>
 </html>
