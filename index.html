@@ -79,9 +79,10 @@
             margin-top: 20px;
         }
 
-        .button {
+        .button-group button {
             flex: 1;
             padding: 12px;
+            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -91,7 +92,6 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            color: white;
         }
 
         #generateButton {
@@ -162,35 +162,38 @@
         </div>
 
         <div class="button-group">
-            <button id="generateButton" class="button">
-                🖨️ Generate & Print
-            </button>
-            <button id="shareButton" class="button">
-                📤 Share Slips
-            </button>
+            <button id="generateButton">🖨️ Print Slips</button>
+            <button id="shareButton">📤 Share Slips</button>
         </div>
     </div>
 
     <script>
         function formatDateTime() {
             const now = new Date();
-            const utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+            // Convert to IST (UTC+5:30)
+            const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
             
             const pad = (n) => String(n).padStart(2, '0');
             
-            const year = utc.getUTCFullYear();
-            const month = pad(utc.getUTCMonth() + 1);
-            const day = pad(utc.getUTCDate());
-            const hours = pad(utc.getUTCHours());
-            const minutes = pad(utc.getUTCMinutes());
-            const seconds = pad(utc.getUTCSeconds());
+            const day = pad(ist.getUTCDate());
+            const month = pad(ist.getUTCMonth() + 1);
+            const year = ist.getUTCFullYear();
+            let hours = ist.getUTCHours();
+            const minutes = pad(ist.getUTCMinutes());
+            const seconds = pad(ist.getUTCSeconds());
 
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            // Convert to 12-hour format
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            const formattedHours = pad(hours);
+
+            return `${day}-${month}-${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
         }
 
         function generateHTML() {
             const currentDate = formatDateTime();
-            
+
             const htmlContent = `
                 <!DOCTYPE html>
                 <html>
@@ -318,16 +321,15 @@
             const mobile2 = document.getElementById('mobile2').value;
 
             // Add slips
-            htmlContent += createSlip(name1, address1, mobile1);
-            if (name2 || address2 || mobile2) {
-                htmlContent += createSlip(name2, address2, mobile2);
-            }
+            const finalContent = htmlContent + 
+                               createSlip(name1, address1, mobile1) +
+                               createSlip(name2, address2, mobile2) +
+                               '</body></html>';
 
-            htmlContent += `</body></html>`;
-            return htmlContent;
+            return finalContent;
         }
 
-        function generateAndPrint() {
+        function generatePDF() {
             const printWindow = window.open('', '_blank');
             printWindow.document.write(generateHTML());
             
@@ -348,8 +350,8 @@
         async function shareSlips() {
             try {
                 const htmlContent = generateHTML();
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const file = new File([blob], 'shipping_slips.html', { type: 'text/html' });
+                const blob = new Blob([htmlContent], { type: 'application/pdf' });
+                const file = new File([blob], 'shipping_slips.pdf', { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare({ files: [file] })) {
                     await navigator.share({
@@ -358,23 +360,15 @@
                         text: 'Shipping slips from Zardoz By Anas Traders'
                     });
                 } else {
-                    // Fallback for browsers that don't support sharing files
-                    const dataUrl = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = dataUrl;
-                    link.download = 'shipping_slips.html';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(dataUrl);
+                    alert('Sharing is not supported on this device. Please use the Print button instead.');
                 }
             } catch (error) {
                 console.error('Error sharing:', error);
-                alert('Could not share the slips. Please try downloading instead.');
+                alert('Could not share the slips. Please try using the Print button.');
             }
         }
 
-        document.getElementById('generateButton').addEventListener('click', generateAndPrint);
+        document.getElementById('generateButton').addEventListener('click', generatePDF);
         document.getElementById('shareButton').addEventListener('click', shareSlips);
     </script>
 </body>
