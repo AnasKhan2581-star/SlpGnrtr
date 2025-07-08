@@ -88,22 +88,24 @@
             return `${day}-${month}-${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
         }
 
+        // Each slip will be approx 210mm x 148mm (A5, landscape)
         function generateSlipHTML(name, address, mobile, currentDate) {
             return `
               <div style="
-                width: 48%; 
-                min-height: 180mm; 
+                width: 210mm; 
+                height: 148mm; 
                 box-sizing: border-box;
                 background: white; 
-                margin: 1%; 
+                margin: 0; 
                 display: inline-block; 
                 vertical-align: top; 
                 border: 1px dashed #000; 
-                padding: 16px;
+                padding: 20mm 12mm 16mm 18mm;
                 position: relative;
                 overflow: hidden;
+                page-break-inside: avoid;
               ">
-                <div style="position:absolute;top:12px;right:16px;font-size:14px;">${currentDate}</div>
+                <div style="position:absolute;top:12mm;right:16mm;font-size:14px;">${currentDate}</div>
                 <div style="font-weight:bold;font-size:30px;margin-bottom:12px;">To:</div>
                 <div style="font-size:22px;padding-left:5%;line-height:1.3;">
                   ${name ? name : ''}<br>
@@ -139,12 +141,17 @@
         async function generateAndDownloadPDF(forSharing = false) {
             showLoading();
 
-            // Use only first slip's input for both
-            const name = document.getElementById('name1').value;
-            const address = document.getElementById('address1').value;
-            const mobile = document.getElementById('mobile1').value;
+            // Collect all slips
+            let slips = [];
+            for (let i = 1; i <= slipCount; i++) {
+                const name = document.getElementById('name' + i)?.value || '';
+                const address = document.getElementById('address' + i)?.value || '';
+                const mobile = document.getElementById('mobile' + i)?.value || '';
+                slips.push({ name, address, mobile });
+            }
             const currentDate = formatDateTime();
 
+            // Only generate up to 2 slips per page (side-by-side)
             let htmlContent = `
                 <!DOCTYPE html>
                 <html>
@@ -154,13 +161,29 @@
                     <style>
                         @page { size: A4 landscape; margin: 0; }
                         body { margin: 0; font-family: Arial, sans-serif; }
+                        .page {
+                            width: 297mm; height: 210mm; 
+                            display: flex; flex-direction: row; 
+                            justify-content: flex-start; align-items: stretch;
+                            page-break-after: always;
+                        }
                     </style>
                 </head>
                 <body>
-                  <div style="width:100vw;height:100vh;display:flex;flex-direction:row;justify-content:space-between;align-items:stretch;">
-                    ${generateSlipHTML(name, address, mobile, currentDate)}
-                    ${generateSlipHTML(name, address, mobile, currentDate)}
-                  </div>
+            `;
+
+            for (let i = 0; i < slips.length; i += 2) {
+                htmlContent += `<div class="page">`;
+                for (let j = 0; j < 2; j++) {
+                    if (slips[i + j]) {
+                        const slip = slips[i + j];
+                        htmlContent += generateSlipHTML(slip.name, slip.address, slip.mobile, currentDate);
+                    }
+                }
+                htmlContent += `</div>`;
+            }
+
+            htmlContent += `
                 </body>
                 </html>
             `;
