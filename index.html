@@ -5,155 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Shipping Slip Generator - Zardoz By Anas Traders</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Your original styles remain exactly the same -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background: #f0f2f5;
-            padding: 20px;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px; margin: 0 auto; background: white;
+            padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-            line-height: 1.4;
+        h1 { color: #333; text-align: center; margin-bottom: 20px; font-size: 24px; line-height: 1.4; }
+        .slip-section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .slip-header { font-weight: bold; margin-bottom: 15px; color: #2196F3; font-size: 18px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .input-group input, .input-group textarea {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;
         }
-
-        .slip-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .slip-header {
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #2196F3;
-            font-size: 18px;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        .input-group input, 
-        .input-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        .input-group textarea {
-            height: 100px;
-            resize: vertical;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
+        .input-group textarea { height: 100px; resize: vertical; }
+        .button-group { display: flex; gap: 10px; margin-top: 20px; }
         .button-group button {
-            flex: 1;
-            padding: 12px;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            flex: 1; padding: 12px; color: white; border: none; border-radius: 5px; cursor: pointer;
+            font-size: 16px; transition: background 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-
-        #generateButton {
-            background: #ff5722;
-        }
-
-        #generateButton:hover {
-            background: #f4511e;
-        }
-
-        #shareButton {
-            background: #2196F3;
-        }
-
-        #shareButton:hover {
-            background: #1976D2;
-        }
-
-        #addSlipButton {
-            background: #4CAF50;
-        }
-
-        #addSlipButton:hover {
-            background: #45a049;
-        }
-
+        #generateButton { background: #ff5722; }
+        #generateButton:hover { background: #f4511e; }
+        #shareButton { background: #2196F3; }
+        #shareButton:hover { background: #1976D2; }
+        #addSlipButton { background: #4CAF50; }
+        #addSlipButton:hover { background: #45a049; }
         .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 18px;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7);
+            display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; z-index: 1000;
         }
-
         @media (max-width: 480px) {
-            .container {
-                padding: 15px;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
+            .container { padding: 15px; }
+            h1 { font-size: 20px; }
+            .button-group { flex-direction: column; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Shipping Slip Generator<br>Zardoz By Anas Traders</h1>
-        
         <div id="slips-container">
             <div class="slip-section">
                 <div class="slip-header">Shipping Slip</div>
@@ -171,7 +63,6 @@
                 </div>
             </div>
         </div>
-
         <div class="button-group">
             <button id="addSlipButton">➕ Add New Slip</button>
             <button id="generateButton">🖨️ Print Slips</button>
@@ -184,88 +75,51 @@
             const now = new Date();
             const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
             const pad = (n) => String(n).padStart(2, '0');
-            
             const day = pad(ist.getUTCDate());
             const month = pad(ist.getUTCMonth() + 1);
             const year = ist.getUTCFullYear();
             let hours = ist.getUTCHours();
             const minutes = pad(ist.getUTCMinutes());
             const seconds = pad(ist.getUTCSeconds());
-
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
             hours = hours ? hours : 12;
             const formattedHours = pad(hours);
-
             return `${day}-${month}-${year} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
         }
 
-       function generateSlipHTML(name, address, mobile, currentDate, position) {
-    if (!name && !address && !mobile) return '';
-    
-    const isNewPage = position % 2 === 1 && position > 1;
-    const isTopHalf = position % 2 === 1;
-    
-    return `
-        <div style="
-            width: 210mm;
-            min-height: 148.5mm;
-            padding: 5%;
-            box-sizing: border-box;
-            position: relative;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            ${isNewPage ? 'page-break-before: always;' : ''}
-            ${!isTopHalf ? 'border-top: 1px dashed #000;' : ''}
-        ">
-            <div style="
-                position: absolute;
-                top: 5%;
-                right: 5%;
-                font-size: 14px;
-            ">${currentDate}</div>
-
-            <div style="flex: 1; padding: 5% 0;">
-                <div style="
-                    font-weight: bold;
-                    font-size: 40px;
-                    margin-bottom: 3%;
-                ">To:</div>
-                <div style="
-                    font-size: 40px;
-                    padding-left: 5%;
-                    line-height: 1.3;
-                ">
-                    ${name}<br>
-                    ${address.replace(/\n/g, '<br>')}<br>
-                    ${mobile ? `Mobile: ${mobile}` : ''}
+        function generateSlipHTML(name, address, mobile, currentDate) {
+            return `
+              <div style="
+                width: 48%; 
+                min-height: 180mm; 
+                box-sizing: border-box;
+                background: white; 
+                margin: 1%; 
+                display: inline-block; 
+                vertical-align: top; 
+                border: 1px dashed #000; 
+                padding: 16px;
+                position: relative;
+                overflow: hidden;
+              ">
+                <div style="position:absolute;top:12px;right:16px;font-size:14px;">${currentDate}</div>
+                <div style="font-weight:bold;font-size:30px;margin-bottom:12px;">To:</div>
+                <div style="font-size:22px;padding-left:5%;line-height:1.3;">
+                  ${name ? name : ''}<br>
+                  ${address ? address.replace(/\n/g, '<br>') : ''}<br>
+                  ${mobile ? `Mobile: ${mobile}` : ''}
                 </div>
-            </div>
-
-            <div style="
-                border-top: 1px solid #000;
-                padding-top: 5%;
-                margin-top: 5%;
-            ">
-                <div style="
-                    font-weight: bold;
-                    font-size: 40px;
-                    margin-bottom: 3%;
-                ">From:</div>
-                <div style="
-                    font-size: 40px;
-                    padding-left: 5%;
-                    line-height: 1.3;
-                ">
+                <div style="border-top:1px solid #000;padding-top:12px;margin-top:16px;">
+                  <div style="font-weight:bold;font-size:24px;margin-bottom:8px;">From:</div>
+                  <div style="font-size:22px;padding-left:5%;line-height:1.3;">
                     Anas Traders "ZARDOZ"<br>
                     Chandni Chowk
+                  </div>
                 </div>
-            </div>
-        </div>
-    `;
-} 
+              </div>
+            `;
+        }
 
         function showLoading() {
             const loading = document.createElement('div');
@@ -284,8 +138,13 @@
 
         async function generateAndDownloadPDF(forSharing = false) {
             showLoading();
-            
+
+            // Use only first slip's input for both
+            const name = document.getElementById('name1').value;
+            const address = document.getElementById('address1').value;
+            const mobile = document.getElementById('mobile1').value;
             const currentDate = formatDateTime();
+
             let htmlContent = `
                 <!DOCTYPE html>
                 <html>
@@ -293,38 +152,18 @@
                     <meta charset="UTF-8">
                     <title>Shipping Slips</title>
                     <style>
-                        @page { size: A4; margin: 0; }
+                        @page { size: A4 landscape; margin: 0; }
                         body { margin: 0; font-family: Arial, sans-serif; }
                     </style>
                 </head>
                 <body>
+                  <div style="width:100vw;height:100vh;display:flex;flex-direction:row;justify-content:space-between;align-items:stretch;">
+                    ${generateSlipHTML(name, address, mobile, currentDate)}
+                    ${generateSlipHTML(name, address, mobile, currentDate)}
+                  </div>
+                </body>
+                </html>
             `;
-
-            // Gather all filled slips
-            const slips = document.querySelectorAll('.slip-section');
-            let filledSlips = [];
-            slips.forEach((slip, index) => {
-                const name = document.getElementById(`name${index + 1}`).value;
-                const address = document.getElementById(`address${index + 1}`).value;
-                const mobile = document.getElementById(`mobile${index + 1}`).value;
-                
-                if (name || address || mobile) {
-                    filledSlips.push({ name, address, mobile });
-                }
-            });
-
-            // Generate HTML for all filled slips
-            filledSlips.forEach((slip, index) => {
-                htmlContent += generateSlipHTML(
-                    slip.name, 
-                    slip.address, 
-                    slip.mobile, 
-                    currentDate, 
-                    index + 1
-                );
-            });
-
-            htmlContent += '</body></html>';
 
             try {
                 const element = document.createElement('div');
@@ -335,21 +174,13 @@
                     margin: 0,
                     filename: 'shipping_slips.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { 
-                        scale: 2,
-                        useCORS: true,
-                        letterRendering: true
-                    },
-                    jsPDF: { 
-                        unit: 'mm', 
-                        format: 'a4', 
-                        orientation: 'portrait'
-                    }
+                    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
                 };
 
                 const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
                 document.body.removeChild(element);
-                
+
                 if (forSharing) {
                     return pdfBlob;
                 } else {
